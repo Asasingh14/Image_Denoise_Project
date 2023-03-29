@@ -1,5 +1,7 @@
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
+use rayon::prelude::*;
+use rayon::iter::*;
 
 pub fn cr3_to_matrix(file_path: &str) -> Option<Vec<Vec<[u16; 3]>>> {
     // Open the CR3 file
@@ -49,4 +51,42 @@ pub fn cr3_to_matrix(file_path: &str) -> Option<Vec<Vec<[u16; 3]>>> {
     }).collect();
 
     Some(matrix)
+}
+
+pub fn extract_rgb_values_in_parallel_cr3(filename: &str) -> Vec<Vec<[u16; 3]>> {
+    // Load the CR3 file and find the start of the preview image
+    let mut file = std::fs::File::open(filename).unwrap();
+    let mut buf = vec![0; 12];
+    file.read_exact(&mut buf).unwrap();
+    let preview_offset = u32::from_le_bytes([buf[8], buf[9], buf[10], buf[11]]);
+
+    // Seek to the start of the preview image
+    file.seek(std::io::SeekFrom::Start(preview_offset as u64)).unwrap();
+
+    // Parse the JPEG header to get the image dimensions
+    let mut buf = vec![0; 9];
+    file.read_exact(&mut buf).unwrap();
+    let width = u16::from_be_bytes([buf[6], buf[7]]) as usize;
+    let height = u16::from_be_bytes([buf[4], buf[5]]) as usize;
+
+    // Allocate a buffer for the image pixels
+    let mut pixels = vec![0; width * height * 3];
+
+    // Read the JPEG image data into the buffer
+    let mut cursor = std::io::Cursor::new(&mut pixels[..]);
+    std::io::copy(&mut file, &mut cursor).unwrap();
+
+    // Extract the RGB values of each pixel in parallel using Rayon
+    let pixels: Vec<[u16; 3]> = pixels
+        .par_chunks(3)
+        .map(|chunk| {
+            let r = chunk[0] as u16;
+            let g = chunk[1] as u16;
+            let b = chunk[2] as u16;
+            [r, g, b]
+        })
+        .collect();
+
+    // Convert the flattened list of pixels into a 2D vector
+    pixels.chunks(width).map(|row| row.to_vec()).collect()
 }
