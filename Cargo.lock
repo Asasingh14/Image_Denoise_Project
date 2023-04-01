@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "crossbeam",
  "image",
+ "jpeg-decoder 0.1.22",
  "rawloader",
  "rayon",
 ]
@@ -274,12 +275,21 @@ dependencies = [
  "color_quant",
  "exr",
  "gif",
- "jpeg-decoder",
+ "jpeg-decoder 0.3.0",
  "num-rational",
  "num-traits",
  "png",
  "scoped_threadpool",
  "tiff",
+]
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.1.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "229d53d58899083193af11e15917b5640cd40b29ff475a1fe4ef725deb02d0f2"
+dependencies = [
+ "rayon",
 ]
 
 [[package]]
@@ -580,7 +590,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7449334f9ff2baf290d55d73983a7d6fa15e01198faef72af07e2a8db851e471"
 dependencies = [
  "flate2",
- "jpeg-decoder",
+ "jpeg-decoder 0.3.0",
  "weezl",
 ]
 
